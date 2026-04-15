@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime
 
 from flask import Flask, render_template, request, jsonify, send_file
-from openai import OpenAI
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from dotenv import load_dotenv
@@ -39,11 +38,11 @@ app.config["UPLOAD_FOLDER"] = os.path.join(_base_dir, "uploads")
 app.config["EXPORT_FOLDER"] = os.path.join(_base_dir, "exports")
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "pdf"}
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["EXPORT_FOLDER"], exist_ok=True)
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Google Sheets connection (persists while app is running)
 sheets_state: dict = {"connected": False, "spreadsheet_id": None, "sheet_url": None}
@@ -63,53 +62,195 @@ def encode_image(image_path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-# receipt parsing 
-PARSE_PROMPT = """Analyze this receipt image and extract the following information as JSON.
-Be as accurate as possible. If a field is not visible, use null.
+def extract_text_from_pdf(pdf_path: str) -> str:
+    """Extract text from PDF file using pypdf."""
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(pdf_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        return text
+    except Exception as e:
+        print(f"Error extracting PDF text: {e}")
+        return ""
 
-Return ONLY valid JSON with this exact structure:
-{
-  "store_name": "Name of the store/business",
-  "date": "YYYY-MM-DD format or null",
-  "items": [
-    {
-      "name": "Item description",
-      "quantity": 1,
-      "price": 0.00,
-      "category": "one of: Food & Groceries, Dining & Restaurants, Transportation, Healthcare, Entertainment, Shopping, Utilities, Office Supplies, Personal Care, Other"
+
+# receipt parsing
+# (AI parsing temporarily disabled)
+# TEXT_EXTRACTION_PROMPT = """Extract all visible text from this receipt image. Return plain text only, preserving line breaks and structure."""
+#
+# PARSE_PROMPT = """Analyze this receipt image and extract the following information as JSON.
+# Be as accurate as possible. If a field is not visible, use null.
+#
+# Return ONLY valid JSON with this exact structure:
+# {
+#   "store_name": "Name of the store/business",
+#   "date": "YYYY-MM-DD format or null",
+#   "items": [
+#     {
+#       "name": "Item description",
+#       "quantity": 1,
+#       "price": 0.00,
+#       "category": "one of: Food & Groceries, Dining & Restaurants, Transportation, Healthcare, Entertainment, Shopping, Utilities, Office Supplies, Personal Care, Other"
+#     }
+#   ],
+#   "subtotal": 0.00,
+#   "tax": 0.00,
+#   "total": 0.00,
+#   "payment_method": "Cash/Credit/Debit/Other or null"
+# }
+# """
+#
+# def extract_text_from_image(image_path: str) -> str:
+#     """Extract raw text from receipt image using Vision API."""
+#     b64 = encode_image(image_path)
+#     ext = image_path.rsplit(".", 1)[1].lower()
+#     mime = f"image/{'jpeg' if ext in ('jpg', 'jpeg') else ext}"
+#
+#     try:
+#         response = client.chat.completions.create(
+#             model="gpt-4o",
+#             messages=[{
+#                 "role": "user",
+#                 "content": [
+#                     {"type": "text", "text": TEXT_EXTRACTION_PROMPT},
+#                     {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
+#                 ],
+#             }],
+#             max_tokens=1000,
+#         )
+#         return response.choices[0].message.content.strip()
+#     except Exception:
+#         return ""
+
+
+def try_pattern_match(text: str) -> dict | None:
+    """Attempt to extract receipt data using pattern matching. Returns None if insufficient data found."""
+    data = {
+        "store_name": None,
+        "date": None,
+        "items": [],
+        "subtotal": None,
+        "tax": None,
+        "total": None,
+        "payment_method": None,
     }
-  ],
-  "subtotal": 0.00,
-  "tax": 0.00,
-  "total": 0.00,
-  "payment_method": "Cash/Credit/Debit/Other or null"
-}
-"""
+    
+    lines = text.split('\n')
+    
+    # Try to find date (YYYY-MM-DD, MM/DD/YY, MM/DD/YYYY, etc.)
+    date_patterns = [
+        r'(\d{4}-\d{2}-\d{2})',
+        r'(\d{1,2}/\d{1,2}/\d{2,4})',
+    ]
+    for pattern in date_patterns:
+        match = re.search(pattern, text)
+        if match:
+            date_str = match.group(1)
+            # Try to normalize to YYYY-MM-DD
+            try:
+                if '-' in date_str:
+                    data["date"] = date_str
+                elif '/' in date_str:
+                    parts = date_str.split('/')
+                    if len(parts[2]) == 2:
+                        year = int(parts[2]) + (2000 if int(parts[2]) < 50 else 1900)
+                    else:
+                        year = int(parts[2])
+                    data["date"] = f"{year:04d}-{int(parts[0]):02d}-{int(parts[1]):02d}"
+            except:
+                pass
+            if data["date"]:
+                break
+    
+    # Try to find total (look for "Total" or "TOTAL" followed by $ or number)
+    total_patterns = [
+        r'(?:Total|TOTAL|Total Due|TOTAL DUE)[:\s]*\$?\s*(\d+[.,]\d{2})',
+        r'(?:Grand Total|GRAND TOTAL)[:\s]*\$?\s*(\d+[.,]\d{2})',
+    ]
+    for pattern in total_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            try:
+                amount_str = match.group(1).replace(',', '.')
+                data["total"] = float(amount_str)
+                break
+            except:
+                pass
+    
+    # Try to find subtotal and tax
+    subtotal_match = re.search(r'(?:Subtotal|SUBTOTAL)[:\s]*\$?\s*(\d+[.,]\d{2})', text, re.IGNORECASE)
+    if subtotal_match:
+        try:
+            data["subtotal"] = float(subtotal_match.group(1).replace(',', '.'))
+        except:
+            pass
+    
+    tax_match = re.search(r'(?:Tax|TAX|Sales Tax)[:\s]*\$?\s*(\d+[.,]\d{2})', text, re.IGNORECASE)
+    if tax_match:
+        try:
+            data["tax"] = float(tax_match.group(1).replace(',', '.'))
+        except:
+            pass
+    
+    # Try to find store name (usually in first few lines and capitalized)
+    for line in lines[:5]:
+        line_clean = line.strip()
+        if line_clean and len(line_clean) > 3 and not any(c.isdigit() for c in line_clean[:5]):
+            if data["store_name"] is None or len(line_clean) < len(data["store_name"]):
+                data["store_name"] = line_clean
+    
+    # Simple item extraction - look for price patterns
+    price_pattern = r'\$?\s*(\d+[.,]\d{2})\s*$'
+    for line in lines:
+        if re.search(price_pattern, line.strip()):
+            item_match = re.match(r'(.+?)\s+\$?\s*(\d+[.,]\d{2})\s*$', line.strip())
+            if item_match:
+                try:
+                    data["items"].append({
+                        "name": item_match.group(1).strip(),
+                        "quantity": 1,
+                        "price": float(item_match.group(2).replace(',', '.')),
+                        "category": "Other",
+                    })
+                except:
+                    pass
+    
+    # Check if we have meaningful data
+    has_enough_data = data["total"] is not None and (data["store_name"] or data["date"])
+    
+    return data if has_enough_data else None
 
-def parse_receipt(image_path: str) -> dict:
-    """Send receipt image to OpenAI Vision API and return parsed data."""
-    b64 = encode_image(image_path)
-    ext = image_path.rsplit(".", 1)[1].lower()
-    mime = f"image/{'jpeg' if ext in ('jpg', 'jpeg') else ext}"
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "text", "text": PARSE_PROMPT},
-                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
-            ],
-        }],
-        max_tokens=2000,
-    )
-
-    raw = response.choices[0].message.content.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1]
-        raw = raw.rsplit("```", 1)[0]
-
-    return json.loads(raw)
+def parse_receipt(file_path: str) -> dict:
+    """Parse receipt using pattern matching. Supports images and PDFs."""
+    # Extract text based on file type
+    ext = file_path.rsplit(".", 1)[1].lower()
+    text = ""
+    
+    if ext == "pdf":
+        text = extract_text_from_pdf(file_path)
+    else:
+        # For images, return template (OCR would be needed here)
+        text = ""
+    
+    # Try pattern matching if we have text
+    if text:
+        matched_data = try_pattern_match(text)
+        if matched_data:
+            return matched_data
+    
+    # Return empty template if no data found
+    return {
+        "store_name": None,
+        "date": None,
+        "items": [],
+        "subtotal": None,
+        "tax": None,
+        "total": None,
+        "payment_method": None,
+    }
 
 def receipt_to_record(parsed: dict) -> dict:
     """Convert parsed receipt JSON into a flat ledger record."""

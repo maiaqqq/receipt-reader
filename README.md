@@ -4,12 +4,15 @@ A receipt scanner that uses AI to read a receipt image and save the data to Goog
 Runs as a **desktop app** (via pywebview) or as a **PWA on iPhone** (Add to Home Screen).
 
 ## Features
-- **Upload one receipt** (PNG, JPG, WEBP, GIF) via tap/drop
-- **AI-powered parsing** using OpenAI GPT-4o Vision — extracts date, total, category, store, and items
+- **Upload one receipt** (PNG, JPG, WEBP, GIF, PDF) via tap/drop
+- **Pattern matching** — extracts store, date, total, and items using smart regex heuristics
 - **Save to Google Sheets** — auto-detects your sheet's columns and appends a new row
 - **Save to Excel** — creates a new `.xlsx` file with one row of receipt data
 - **Desktop executable** — builds with PyInstaller + pywebview (no browser needed)
 - **iPhone PWA** — deploy to HTTPS, tap Share → "Add to Home Screen"
+
+### How it works
+**Pattern matching** — uses regex patterns to extract store name, date, total, and items from receipt text.
 
 ### Google Sheet columns
 The app writes one row per receipt with these fields (auto-mapped to these existing headers):
@@ -23,11 +26,7 @@ The app writes one row per receipt with these fields (auto-mapped to these exist
    ```bash
    pip install -r requirements.txt
    ```
-3. **Create a `.env` file** with your OpenAI API key:
-   ```
-   OPENAI_API_KEY=sk-...
-   ```
-4. **Run the app (dev mode):**
+3. **Run the app (dev mode):**
    ```bash
    python app.py
    ```
@@ -62,5 +61,4 @@ Place your `.env` and `service_account.json` next to the `.exe`.
 
 ## Requirements
 - Python 3.10+
-- OpenAI API key with access to the `gpt-4o` model
 - (Optional) Google service account for Sheets integration

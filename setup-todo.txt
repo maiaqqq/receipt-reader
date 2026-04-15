@@ -4,30 +4,27 @@
 
 REQUIRED
 --------
-[ ] 1. Install Python packages:
+[X] 1. Install Python packages:
        pip install -r requirements.txt
        If SSL errors: pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
 
        Key packages:
-       - flask, openai, openpyxl, python-dotenv, werkzeug  (core)
+       - flask, openpyxl, python-dotenv, werkzeug  (core)
        - Pillow        (PWA icon generation & image handling)
        - pywebview     (native desktop window — needed for .exe build)
        - pyinstaller   (building the executable)
 
-[ ] 2. Create .env file:
-       - Add your OpenAI API key: OPENAI_API_KEY=sk-...
-
-[ ] 3. Run the app (dev mode):
+[ ] 2. Run the app (dev mode):
        python app.py
        Opens at http://localhost:5000
 
-[ ] 4. Generate PWA icons (requires Pillow):
+[ ] 3. Generate PWA icons (requires Pillow):
        python generate_icons.py
 
-[ ] 5. Build desktop executable:
+[ ] 4. Build desktop executable:
        python build.py
        Output: dist/ReceiptReader/ReceiptReader.exe
-       Place .env and service_account.json next to the .exe.
+       Place service_account.json next to the .exe (if using Google Sheets).
 
 
 OPTIONAL - Google Sheets Integration
