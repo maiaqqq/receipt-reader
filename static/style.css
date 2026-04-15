@@ -1,0 +1,189 @@
+/* ── Receipt Reader · Cute Compact UI ── */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+:root {
+  --purple:    #9b72cf;
+  --purple-dk: #7c52b8;
+  --pink:      #e8a0bf;
+  --bg:        #f8f0ff;
+  --card:      #ffffff;
+  --text:      #3d2c5e;
+  --text-sub:  #7a6b8a;
+  --green:     #69c779;
+  --red:       #e06070;
+  --radius:    14px;
+  --shadow:    0 2px 12px rgba(100, 60, 140, .12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; width: 100%;
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── App shell ── */
+.app {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 24px 16px env(safe-area-inset-bottom, 16px);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo { text-align: center; margin-bottom: 18px; }
+.logo h1 {
+  font-size: 22px; font-weight: 700;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.logo p { font-size: 13px; color: var(--text-sub); margin-top: 2px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--purple); margin-bottom: 10px;
+}
+
+/* ── Drop zone ── */
+.drop-zone {
+  border: 2px dashed var(--pink); border-radius: 12px;
+  padding: 28px 12px; text-align: center;
+  cursor: pointer; transition: .2s;
+  background: #fdf6ff;
+}
+.drop-zone.hover, .drop-zone:hover { border-color: var(--purple); background: #f3e8ff; }
+.drop-zone .icon { font-size: 32px; display: block; margin-bottom: 6px; }
+.drop-zone p { font-size: 13px; color: var(--text-sub); }
+.drop-zone input[type=file] { display: none; }
+
+/* ── Image preview ── */
+.preview-wrap { text-align: center; margin-top: 10px; }
+.preview-wrap img {
+  max-width: 100%; max-height: 160px;
+  border-radius: 10px; object-fit: contain;
+}
+.preview-info {
+  margin-top: 6px; font-size: 12px; color: var(--text-sub);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.preview-info button {
+  background: none; border: none; color: var(--red);
+  font-weight: 700; cursor: pointer; font-size: 12px;
+}
+
+/* ── Destination / action buttons ── */
+.choice-group { display: flex; gap: 8px; }
+.choice-btn {
+  flex: 1; padding: 10px 6px; border: 2px solid #e0d4f0;
+  border-radius: 10px; background: #fdf8ff; cursor: pointer;
+  font-size: 13px; font-weight: 600; text-align: center;
+  transition: .2s; color: var(--text);
+}
+.choice-btn:hover { border-color: var(--purple); }
+.choice-btn.active {
+  border-color: var(--purple); background: #ece1f9;
+  color: var(--purple-dk);
+}
+.choice-btn .icon { display: block; font-size: 22px; margin-bottom: 2px; }
+
+/* ── Google Sheets link input ── */
+.sheets-url { margin-top: 10px; display: none; }
+.sheets-url.show { display: block; }
+.sheets-url label { font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 4px; }
+.url-row { display: flex; gap: 6px; }
+.url-row input {
+  flex: 1; padding: 8px 10px; border: 2px solid #e0d4f0;
+  border-radius: 8px; font-size: 13px; font-family: inherit;
+  outline: none; transition: .2s;
+}
+.url-row input:focus { border-color: var(--purple); }
+.url-row button {
+  padding: 8px 14px; border: none; border-radius: 8px;
+  background: var(--purple); color: #fff; font-weight: 700;
+  font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.sheets-connected {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--green); font-weight: 600;
+  margin-top: 6px;
+}
+.sheets-connected button {
+  background: none; border: none; color: var(--red);
+  cursor: pointer; font-weight: 700; font-size: 12px;
+}
+
+/* ── Submit button ── */
+.submit-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: #fff; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: .2s; margin-top: 4px;
+  letter-spacing: .4px;
+}
+.submit-btn:disabled {
+  opacity: .45; cursor: default;
+}
+.submit-btn:not(:disabled):hover { filter: brightness(1.06); }
+
+/* ── Status / result banner ── */
+.status {
+  padding: 14px 16px; border-radius: 12px;
+  font-size: 13px; font-weight: 600; text-align: center;
+  display: none;
+}
+.status.show { display: block; }
+.status.loading { background: #ece1f9; color: var(--purple-dk); }
+.status.success { background: #e4f5e7; color: #2a7a3a; }
+.status.error { background: #fde6e8; color: #b93e4a; }
+
+/* ── Parsed record preview table ── */
+.record-preview { margin-top: 10px; }
+.record-preview table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.record-preview th {
+  text-align: left; padding: 5px 8px; background: #f0e6fa;
+  color: var(--purple-dk); font-weight: 700; border-radius: 4px;
+}
+.record-preview td { padding: 5px 8px; color: var(--text); }
+.record-preview tr:nth-child(even) td { background: #faf6ff; }
+
+/* ── Download link ── */
+.download-link {
+  display: inline-block; margin-top: 10px;
+  padding: 8px 16px; border-radius: 8px;
+  background: var(--purple); color: #fff;
+  text-decoration: none; font-size: 13px; font-weight: 700;
+}
+
+/* ── Spinner ── */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2.5px solid currentColor; border-right-color: transparent;
+  border-radius: 50%; animation: spin .6s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive tweaks ── */
+@media (max-width: 440px) {
+  .app { padding: 14px 10px; }
+  .logo h1 { font-size: 19px; }
+}
+
+/* ── PWA standalone mode: remove extra top padding ── */
+@media (display-mode: standalone) {
+  .app { padding-top: 44px; } /* room for status bar on iPhone */
+}

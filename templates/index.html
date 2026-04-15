@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#9b72cf">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}">
+  <title>Receipt Reader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="app">
+  <!-- Logo -->
+  <div class="logo">
+    <h1>&#x1F9FE; Receipt Reader</h1>
+    <p>Snap &bull; Read &bull; Save</p>
+  </div>
+
+  <!-- Step 1 — Upload -->
+  <div class="card">
+    <div class="card-title">&#x2460; Upload Receipt</div>
+
+    <div class="drop-zone" id="dropZone">
+      <span class="icon">&#x1F4F8;</span>
+      <p>Tap or drop an image</p>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif" capture="environment">
+    </div>
+
+    <div class="preview-wrap" id="previewWrap" style="display:none">
+      <img id="previewImg" alt="preview">
+      <div class="preview-info">
+        <span id="previewName"></span>
+        <button id="removeBtn">✕ Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 — Destination -->
+  <div class="card">
+    <div class="card-title">&#x2461; Save to</div>
+    <div class="choice-group">
+      <button class="choice-btn" id="btnSheets">
+        <span class="icon">&#x1F4CA;</span> Google Sheets
+      </button>
+      <button class="choice-btn" id="btnExcel">
+        <span class="icon">&#x1F4D7;</span> Excel File
+      </button>
+    </div>
+
+    <!-- Sheets URL (shown only when Sheets is selected & not yet linked) -->
+    <div class="sheets-url" id="sheetsUrl">
+      <label>Paste your Google Sheets link:</label>
+      <div class="url-row">
+        <input type="url" id="urlInput" placeholder="https://docs.google.com/spreadsheets/d/…">
+        <button id="connectBtn">Link</button>
+      </div>
+    </div>
+
+    <div class="sheets-connected" id="connectedInfo" style="display:none">
+      &#x2705; <span id="connectedTitle"></span>
+      <button id="disconnectBtn">✕</button>
+    </div>
+  </div>
+
+  <!-- Step 3 — Action (shown for Sheets when linked) -->
+  <div class="card" id="actionCard" style="display:none">
+    <div class="card-title">&#x2462; Action</div>
+    <div class="choice-group">
+      <button class="choice-btn" id="btnAppend">
+        <span class="icon">&#x2795;</span> Add Row
+      </button>
+      <button class="choice-btn" id="btnNew">
+        <span class="icon">&#x1F195;</span> New Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <button class="submit-btn" id="submitBtn" disabled>&#x1F680; Process Receipt</button>
+
+  <!-- Status -->
+  <div class="status" id="status"></div>
+
+  <!-- Result area -->
+  <div id="resultArea"></div>
+</div>
+
+<!-- PWA service worker -->
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/static/sw.js").catch(() => {});
+  }
+</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

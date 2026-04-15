@@ -1,0 +1,7 @@
+.env
+uploads/
+exports/
+__pycache__/
+*.pyc
+service_account.json
+.venv/

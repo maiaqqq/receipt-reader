@@ -1,0 +1,53 @@
+============================================
+  RECEIPT READER - SETUP TODO
+============================================
+
+REQUIRED
+--------
+[ ] 1. Install Python packages:
+       pip install -r requirements.txt
+       If SSL errors: pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+
+       Key packages:
+       - flask, openai, openpyxl, python-dotenv, werkzeug  (core)
+       - Pillow        (PWA icon generation & image handling)
+       - pywebview     (native desktop window — needed for .exe build)
+       - pyinstaller   (building the executable)
+
+[ ] 2. Create .env file:
+       - Add your OpenAI API key: OPENAI_API_KEY=sk-...
+
+[ ] 3. Run the app (dev mode):
+       python app.py
+       Opens at http://localhost:5000
+
+[ ] 4. Generate PWA icons (requires Pillow):
+       python generate_icons.py
+
+[ ] 5. Build desktop executable:
+       python build.py
+       Output: dist/ReceiptReader/ReceiptReader.exe
+       Place .env and service_account.json next to the .exe.
+
+
+OPTIONAL - Google Sheets Integration
+-------------------------------------
+       (gspread & google-auth are already in requirements.txt)
+
+[ ] 6. Set up Google Cloud service account:
+       - Go to https://console.cloud.google.com
+       - Enable Google Sheets API and Google Drive API
+       - Create a Service Account
+       - Download JSON key file
+       - Save as service_account.json in the project root
+
+[ ] 7. Share your Google Sheet:
+       - Open the JSON key file, find "client_email"
+       - Share your Google Sheet with that email (Editor access)
+
+
+IPHONE / PWA
+------------
+[ ] 8. Deploy the app to a server with HTTPS (e.g. Railway, Render)
+[ ] 9. Open the URL in Safari on iPhone
+[ ] 10. Tap Share → "Add to Home Screen" to create an app icon
