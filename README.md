@@ -29,7 +29,7 @@ The app writes one row per receipt with these fields (auto-mapped to these exist
    - `ReceiptReader.exe`
    - `.env` (your config)
    - `service_account.json` (for Google Sheets, if using)
-4. Double-click `ReceiptReader.exe` — app opens immediately!
+4. Double-click `ReceiptReader.exe` to open app
 
 ## Development Setup
 
