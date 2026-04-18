@@ -20,7 +20,20 @@ The app writes one row per receipt with these fields (auto-mapped to these exist
 | Timestamp | Expense/Income | Date | Month | Amount | Type of Expense | Description |
 |-----------|---------------|------|-------|--------|-----------------|-------------|
 
-## Setup
+## Quick Start (Download)
+
+**Get the latest Windows executable:**
+1. Go to [Releases](https://github.com/maiaqqq/receipt-reader/releases)
+2. Download `ReceiptReader.exe` from the latest release
+3. Create a folder with:
+   - `ReceiptReader.exe`
+   - `.env` (your config)
+   - `service_account.json` (for Google Sheets, if using)
+4. Double-click `ReceiptReader.exe` — app opens immediately!
+
+## Development Setup
+
+### For developers / local testing:
 1. **Install Python 3.10+**
 2. **Install dependencies:**
    ```bash
@@ -40,11 +53,28 @@ The app writes one row per receipt with these fields (auto-mapped to these exist
 
 ## Build Desktop Executable
 
+### Automated (Recommended)
+Every time you create a new **git tag** (e.g., `v1.0.0`), GitHub Actions automatically:
+1. Builds `ReceiptReader.exe`
+2. Creates a new Release
+3. Attaches the executable
+
+```bash
+# Create and push a new release tag
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+Then check [Releases](https://github.com/maiaqqq/receipt-reader/releases) — your `.exe` will be there in ~2 minutes!
+
+### Manual Build (Local)
+To build locally:
 ```bash
 python generate_icons.py   # creates PWA icons (requires Pillow)
 python build.py             # builds dist/ReceiptReader/ReceiptReader.exe
 ```
 
+Output: `dist/ReceiptReader/ReceiptReader.exe`  
 Place your `.env` and `service_account.json` next to the `.exe`.
 
 ## Google Sheets Setup
